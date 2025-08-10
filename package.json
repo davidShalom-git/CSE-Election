@@ -1,0 +1,10 @@
+{
+  "name": "voting-app",
+  "version": "1.0.0",
+  "description": "Voting application API",
+  "main": "Backend/Server.js",
+  "scripts": {
+    "start": "node Backend/Server.js"
+  },
+  "dependencies": {}
+}
