@@ -11,23 +11,22 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URI)
+// MongoDB connection - USE ENVIRONMENT VARIABLE
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote')
   .then(() => {
     console.log('DB connected');
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.log(err);
   });
+
+// Test route
+app.get('/', (req, res) => {
+  res.json({ message: 'Voting API is running!', status: 'success' });
+});
 
 // Routes
 app.use('/api/vote', user);
 
-// Root route for testing
-app.get('/', (req, res) => {
-  res.json({ message: 'Voting API is running!' });
-});
-
-// This is important for Vercel
+// Export for Vercel (IMPORTANT!)
 module.exports = app;
