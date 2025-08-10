@@ -11,10 +11,5 @@
       "src": "/(.*)",
       "dest": "Backend/Server.js"
     }
-  ],
-  "functions": {
-    "Backend/Server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
