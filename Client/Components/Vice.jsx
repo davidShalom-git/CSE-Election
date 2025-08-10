@@ -90,10 +90,7 @@ const Vice = () => {
     setIsVoting(false)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    window.location.replace('/')
-  }
+
 
   if (isLoading) {
     return (
