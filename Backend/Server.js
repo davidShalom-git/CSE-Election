@@ -24,10 +24,10 @@ mongoose
 // Routes
 app.use('/api/vote', user);
 
-// Add a root route
+// Root route for testing
 app.get('/', (req, res) => {
   res.json({ message: 'Voting API is running!' });
 });
 
-// Export the handler for Vercel
+// This is important for Vercel
 module.exports = app;
