@@ -5,12 +5,13 @@ import { useNavigate } from 'react-router-dom'
 
 
 
+// In useAuth hook
 const useAuth = () => ({
     login: (token, user) => {
         console.log('Login successful:', { token, user })
-        localStorage.setItem('token', token)
+        sessionStorage.setItem('token', token) // Changed from localStorage
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user))
+            sessionStorage.setItem('user', JSON.stringify(user)) // Changed from localStorage
         }
     }
 })
@@ -118,21 +119,8 @@ const SignIn = () => {
                 setFormData(initialState)
 
                 // Animate out and navigate using React Router
-                if (containerRef.current) {
-                    gsap.to(containerRef.current, {
-                        scale: 0.95,
-                        opacity: 0,
-                        duration: 0.5,
-                        ease: "power2.in",
-                        onComplete: () => {
-                            console.log('Navigating to /home')
-                            navigate('/home', { replace: true })
-                        }
-                    })
-                } else {
-                    // Fallback navigation
-                    navigate('/home', { replace: true })
-                }
+                 console.log('Navigating to /home')
+                navigate('/home', { replace: true })
             } else {
                 setError(data.message || data.error || 'Login failed')
             }
