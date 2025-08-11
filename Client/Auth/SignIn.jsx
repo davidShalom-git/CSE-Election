@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { gsap } from 'gsap'
 import { useNavigate } from 'react-router-dom'
 
-
-
+// Mock auth hook for demonstration
 const useAuth = () => ({
     login: (token, user) => {
         console.log('Login successful:', { token, user })
-        localStorage.setItem('token', token)
+        // In production, you'd use proper state management instead of localStorage
+        sessionStorage.setItem('token', token)
         if (user) {
-            localStorage.setItem('user', JSON.stringify(user))
+            sessionStorage.setItem('user', JSON.stringify(user))
         }
     }
 })
@@ -27,69 +26,36 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [focusedField, setFocusedField] = useState('')
     const [isVisible, setIsVisible] = useState(true)
-     const navigate = useNavigate()
-
+    
+    const navigate = useNavigate()
     const { login } = useAuth()
     const containerRef = useRef(null)
     const voteIconRef = useRef(null)
 
-
     useEffect(() => {
         if (!isVisible || !containerRef.current) return
 
-        const ctx = gsap.context(() => {
-            
-            gsap.set(".particle", {
-                opacity: 0,
-                scale: 0,
-                rotation: 0
-            })
+        // Simple animations without GSAP dependency
+        const container = containerRef.current
+        container.style.transform = 'translateY(50px) scale(0.9)'
+        container.style.opacity = '0'
+        
+        setTimeout(() => {
+            container.style.transition = 'all 1s ease-out'
+            container.style.transform = 'translateY(0) scale(1)'
+            container.style.opacity = '1'
+        }, 100)
 
-            gsap.to(".particle", {
-                opacity: 0.6,
-                scale: 1,
-                rotation: 360,
-                duration: 2,
-                stagger: 0.1,
-                repeat: -1,
-                yoyo: true,
-                ease: "power2.inOut"
-            })
-
-         
-            if (voteIconRef.current) {
-                gsap.to(voteIconRef.current, {
-                    scale: 1.1,
-                    duration: 2,
-                    repeat: -1,
-                    yoyo: true,
-                    ease: "power2.inOut"
-                })
+        return () => {
+            if (container) {
+                container.style.transition = ''
+                container.style.transform = ''
+                container.style.opacity = ''
             }
-
-            
-            gsap.fromTo(containerRef.current,
-                {
-                    y: 50,
-                    opacity: 0,
-                    scale: 0.9
-                },
-                {
-                    y: 0,
-                    opacity: 1,
-                    scale: 1,
-                    duration: 1,
-                    ease: "back.out(1.7)"
-                }
-            )
-        }, containerRef)
-
-        return () => ctx.revert()
+        }
     }, [isVisible])
 
- 
-
-   const fetchData = async () => {
+    const fetchData = async () => {
         setIsLoading(true)
         setError(null)
 
@@ -100,39 +66,27 @@ const SignIn = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    Email: formData.Email,    // Backend expects lowercase
+                    Email: formData.Email,
                     Password: formData.Password
                 })
             })
 
             const data = await response.json()
-            console.log('Login response:', data) // Debug log
+            console.log('Login response:', data)
 
             if (response.ok) {
-                // Store authentication data
-                localStorage.setItem('token', data.token)
+                // Store authentication data using sessionStorage for demo
+                sessionStorage.setItem('token', data.token)
                 if (data.user) {
-                    localStorage.setItem('user', JSON.stringify(data.user))
+                    sessionStorage.setItem('user', JSON.stringify(data.user))
                 }
 
                 setFormData(initialState)
 
-                // Animate out and navigate using React Router
-                if (containerRef.current) {
-                    gsap.to(containerRef.current, {
-                        scale: 0.95,
-                        opacity: 0,
-                        duration: 0.5,
-                        ease: "power2.in",
-                        onComplete: () => {
-                            console.log('Navigating to /home')
-                            window.location.replace('/home')
-                        }
-                    })
-                } else {
-                    // Fallback navigation
-                    navigate('/home', { replace: true })
-                }
+                // Use only React Router navigation
+                console.log('Navigating to /home')
+                navigate('/home', { replace: true })
+                
             } else {
                 setError(data.message || data.error || 'Login failed')
             }
@@ -165,29 +119,11 @@ const SignIn = () => {
 
         if (!formData.Email || !formData.Password) {
             setError('Please fill in all fields')
-
-         
-            if (containerRef.current) {
-                gsap.to(containerRef.current, {
-                    x: [-10, 10, -10, 10, 0],
-                    duration: 0.5,
-                    ease: "power2.out"
-                })
-            }
             return
         }
 
         if (!validatePassword(formData.Password)) {
             setError('Password must contain both letters and numbers')
-
-         
-            if (containerRef.current) {
-                gsap.to(containerRef.current, {
-                    x: [-10, 10, -10, 10, 0],
-                    duration: 0.5,
-                    ease: "power2.out"
-                })
-            }
             return
         }
 
@@ -244,12 +180,12 @@ const SignIn = () => {
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
-          
+            {/* Animated particles */}
             <div className="absolute inset-0 overflow-hidden">
                 {[...Array(12)].map((_, i) => (
                     <motion.div
                         key={i}
-                        className="particle absolute w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"
+                        className="absolute w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-60"
                         style={{
                             left: `${Math.random() * 100}%`,
                             top: `${Math.random() * 100}%`,
@@ -268,7 +204,7 @@ const SignIn = () => {
                 ))}
             </div>
 
-        
+            {/* Backdrop blur overlay */}
             <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" />
 
             <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4">
@@ -442,7 +378,6 @@ const SignIn = () => {
                                 </div>
                             </motion.div>
 
-
                             <motion.button
                                 variants={buttonVariants}
                                 initial="idle"
@@ -455,7 +390,6 @@ const SignIn = () => {
                                     : 'bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500'
                                     }`}
                             >
-
                                 {!isLoading && (
                                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur" />
                                 )}
@@ -491,7 +425,6 @@ const SignIn = () => {
                             </motion.button>
                         </div>
 
-
                         <motion.div
                             variants={itemVariants}
                             className="px-8 py-6 bg-white/5 backdrop-blur text-center border-t border-white/10"
@@ -510,7 +443,6 @@ const SignIn = () => {
                             </div>
                         </motion.div>
                     </div>
-
 
                     <motion.div
                         className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full blur opacity-60"
