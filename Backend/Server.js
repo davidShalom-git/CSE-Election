@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const User = require('./router/User');
 
 const app = express();
 
@@ -85,6 +86,9 @@ app.get('/api', (req, res) => {
     ]
   });
 });
+
+
+app.use('/api/vote', User);
 
 // Load user routes
 try {
