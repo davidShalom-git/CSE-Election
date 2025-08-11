@@ -25,7 +25,7 @@ const Vice = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await fetch(`http://localhost:1200/api/vote/user-status/${role}`, {
+      const res = await fetch(`https://cse-election.vercel.app/api/vote/user-status/${role}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -69,7 +69,7 @@ const Vice = () => {
     setSuccess(null)
 
     try {
-      const res = await fetch(`http://localhost:1200/api/vote/vote/${role}`, {
+      const res = await fetch(`https://cse-election.vercel.app/api/vote/vote/${role}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

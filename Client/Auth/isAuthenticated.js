@@ -20,7 +20,7 @@ const isAuthenticated = () => {
 
     const verifyToken = async (tokenToVerify) => {
         try {
-            const response = await fetch('http://localhost:1200/api/vote/user-status', {
+            const response = await fetch('https://cse-election.vercel.app/api/vote/user-status', {
                 headers: {
                     'Authorization': `Bearer ${tokenToVerify}`
                 }

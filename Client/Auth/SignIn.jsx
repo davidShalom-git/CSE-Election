@@ -92,7 +92,7 @@ const SignIn = () => {
         setError(null)
 
         try {
-            const response = await fetch('http://localhost:1200/api/vote/login', {
+            const response = await fetch('https://cse-election.vercel.app/api/vote/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
