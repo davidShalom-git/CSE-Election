@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gsap } from 'gsap'
+import { useNavigate } from 'react-router-dom'
 
 
 
@@ -26,6 +27,7 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [focusedField, setFocusedField] = useState('')
     const [isVisible, setIsVisible] = useState(true)
+     const navigate = useNavigate()
 
     const { login } = useAuth()
     const containerRef = useRef(null)
@@ -87,7 +89,7 @@ const SignIn = () => {
 
  
 
-    const fetchData = async () => {
+   const fetchData = async () => {
         setIsLoading(true)
         setError(null)
 
@@ -98,24 +100,24 @@ const SignIn = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    Email: formData.Email,
+                    Email: formData.Email,    // Backend expects lowercase
                     Password: formData.Password
                 })
             })
 
             const data = await response.json()
+            console.log('Login response:', data) // Debug log
 
             if (response.ok) {
-             
+                // Store authentication data
                 localStorage.setItem('token', data.token)
                 if (data.user) {
                     localStorage.setItem('user', JSON.stringify(data.user))
                 }
 
-                login(data.token, data.user)
                 setFormData(initialState)
 
-             
+                // Animate out and navigate using React Router
                 if (containerRef.current) {
                     gsap.to(containerRef.current, {
                         scale: 0.95,
@@ -123,19 +125,19 @@ const SignIn = () => {
                         duration: 0.5,
                         ease: "power2.in",
                         onComplete: () => {
-                            console.log('Redirecting to /vote')
-                            // Use window.location after token is stored
-                            setTimeout(() => {
-                                window.location.href = '/home'
-                            }, 100) // Small delay to ensure token is stored
+                            console.log('Navigating to /home')
+                            navigate('/home', { replace: true })
                         }
                     })
+                } else {
+                    // Fallback navigation
+                    navigate('/home', { replace: true })
                 }
             } else {
-                setError(data.message || 'Login failed')
+                setError(data.message || data.error || 'Login failed')
             }
         } catch (err) {
-            console.log('Error:', err)
+            console.error('Login error:', err)
             setError('Network error. Please try again.')
         } finally {
             setIsLoading(false)
