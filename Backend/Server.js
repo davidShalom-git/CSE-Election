@@ -6,11 +6,11 @@ const mongoose = require('mongoose');
 
 const app = express();
 
-
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote')
   .then(() => {
     console.log('DB connected');
@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote')
     console.log('MongoDB error:', err);
   });
 
-
+// Root route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Voting API is running!', 
@@ -28,18 +28,49 @@ app.get('/', (req, res) => {
   });
 });
 
-
+// API routes
 try {
-  const user = require('./router/User');
-  app.use('/api/vote', user);
+  const userRouter = require('./router/User');
+  app.use('/api/vote', userRouter);
 } catch (err) {
-  console.log('Router not found, skipping...');
+  console.log('Router loading error:', err.message);
+  // Continue without router for now
 }
 
-
-app.get('*', (req, res) => {
-  res.json({ message: 'API endpoint not found', path: req.path });
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || 'development'
+  });
 });
 
+// 404 handler
+app.get('*', (req, res) => {
+  res.status(404).json({ 
+    message: 'API endpoint not found', 
+    path: req.path,
+    timestamp: new Date().toISOString()
+  });
+});
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'production' ? {} : err.stack
+  });
+});
+
+// For Vercel serverless functions
 module.exports = app;
+
+// For local development
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
