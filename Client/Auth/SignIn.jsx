@@ -126,7 +126,7 @@ const SignIn = () => {
                         ease: "power2.in",
                         onComplete: () => {
                             console.log('Navigating to /home')
-                            navigate('/home', { replace: true })
+                            window.location.replace('/home')
                         }
                     })
                 } else {
