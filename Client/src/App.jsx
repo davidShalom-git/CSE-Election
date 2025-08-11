@@ -89,7 +89,7 @@ const App = () => {
         <Route 
           path="*" 
           element={
-            getToken() ? <Navigate to="/home" replace /> : <Navigate to="/" replace />
+            getToken() ? <Navigate to="/home" replace /> : <Navigate to="/home" replace />
           } 
         />
       </Routes>
