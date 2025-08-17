@@ -18,10 +18,10 @@ const verifyToken = (req, res, next) => {
 };
 
 const candidatesList = {
-  president: ['John Doe', 'Jane Smith', 'Robert Lee'],
-  vicePresident: ['Alice Cooper', 'Mark Taylor'],
-  secretary: ['Sara White', 'David Kim'],
-  treasury: ['Emma Johnson', 'Chris Evans']
+  president: ['Dhanusu K A', 'Maria Joseph', 'Rohit Kumar'],
+  vicePresident: ['Harini N', 'Mark Taylor'],
+  secretary: ['Bharathan K', 'David Kim'],
+  treasury: ['Kanchana S', 'Chris Evans']
 };
 
 const validRoles = ['president', 'vicePresident', 'secretary', 'treasury'];
