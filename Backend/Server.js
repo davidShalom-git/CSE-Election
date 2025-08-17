@@ -90,23 +90,7 @@ app.get('/api', (req, res) => {
 
 app.use('/api/vote', User);
 
-// Load user routes
-try {
-  const userRouter = require('./router/User');
-  app.use('/api/vote', userRouter);
-  console.log('✅ User router loaded successfully');
-} catch (err) {
-  console.log('⚠️ User router not found or has errors:', err.message);
-  
-  // Create a fallback route
-  app.get('/api/vote/test', (req, res) => {
-    res.json({
-      message: 'Vote API test endpoint (fallback)',
-      note: 'User router not loaded',
-      error: err.message
-    });
-  });
-}
+
 
 // Catch-all route for API
 app.all('/api/*', (req, res) => {
