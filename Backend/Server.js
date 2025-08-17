@@ -1,13 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const vote = require('./router/User');
 
 const app = express();
 
-// Define allowed origins in one place
+// Define allowed origins
 const allowedOrigins = [
   'https://cse-election-2025.vercel.app',
   'https://cse-election.vercel.app',
@@ -16,66 +15,30 @@ const allowedOrigins = [
   'http://localhost:3001'
 ];
 
-// Enhanced CORS configuration for Vercel
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Accept',
-    'Origin'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
-};
-
-// Apply CORS before any other middleware
-app.use(cors(corsOptions));
-
-// Fixed OPTIONS handler that respects the origin
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  
-  // Set the origin header dynamically based on the request
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '3600'); // Cache preflight for 1 hour
-  res.status(200).end();
-});
-
-// Additional manual CORS headers for all responses
+// CORS Middleware - Simplified and Direct
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
+  console.log(`${req.method} ${req.url} - Origin: ${origin}`);
+  
+  // Set CORS headers for all requests
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // Allow requests with no origin (like Postman, mobile apps)
+    res.header('Access-Control-Allow-Origin', '*');
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
   
-  // Log the request for debugging
-  console.log(`${req.method} ${req.path} - Origin: ${origin}`);
+  // Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
+    return res.status(200).end();
+  }
   
   next();
 });
@@ -84,13 +47,11 @@ app.use((req, res, next) => {
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-// MongoDB connection with better error handling
+// MongoDB connection
 let isConnected = false;
 
 const connectToDatabase = async () => {
-  if (isConnected) {
-    return;
-  }
+  if (isConnected) return;
 
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote';
@@ -106,7 +67,6 @@ const connectToDatabase = async () => {
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    // Don't throw error, let the app continue
   }
 };
 
@@ -120,7 +80,6 @@ app.get('/', (req, res) => {
     status: 'success',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    cors: 'enabled',
     allowedOrigins: allowedOrigins
   });
 });
@@ -131,8 +90,7 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     database: isConnected ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV || 'development',
-    cors: 'enabled'
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -143,10 +101,7 @@ app.get('/api/test-cors', (req, res) => {
     origin: req.headers.origin,
     method: req.method,
     allowedOrigins: allowedOrigins,
-    corsHeaders: {
-      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-      'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
-    },
+    headers: req.headers,
     timestamp: new Date().toISOString()
   });
 });
@@ -171,45 +126,35 @@ app.get('/api', (req, res) => {
       'GET /test',
       'GET /api/test-cors',
       'GET /api',
-      'POST /api/vote/login'
+      'POST /api/vote/login',
+      'POST /api/vote/register',
+      'POST /api/vote/:role',
+      'GET /api/vote/candidates',
+      'GET /api/vote/stats'
     ]
   });
 });
 
-// Load and use vote routes
+// Load vote routes with error handling
 try {
   app.use('/api/vote', vote);
   console.log('✅ User router loaded successfully');
 } catch (err) {
-  console.log('⚠️ User router error:', err.message);
-  
-  // Fallback login route for testing
-  app.post('/api/vote/login', (req, res) => {
-    console.log('Fallback login route hit');
-    console.log('Request body:', req.body);
-    console.log('Request origin:', req.headers.origin);
-    
-    res.json({
-      success: true,
-      message: 'Fallback login endpoint - User router had error',
-      body: req.body,
-      origin: req.headers.origin,
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // Fallback test route
-  app.get('/api/vote/test', (req, res) => {
-    res.json({
-      message: 'Vote API test endpoint (fallback)',
-      note: 'User router had error',
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
-  });
+  console.error('⚠️ User router error:', err.message);
 }
 
-// Catch-all for API routes
+// Fallback routes in case router fails
+app.post('/api/vote/login', (req, res) => {
+  console.log('Fallback login route - this should not be called if router is working');
+  res.json({
+    success: false,
+    message: 'Fallback route called - check router loading',
+    body: req.body,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler for API routes
 app.all('/api/*', (req, res) => {
   console.log(`404 - API endpoint not found: ${req.method} ${req.path}`);
   res.status(404).json({
@@ -227,7 +172,6 @@ app.all('*', (req, res) => {
     error: 'Route not found', 
     path: req.path,
     method: req.method,
-    availableRoutes: ['/', '/health', '/test', '/api', '/api/vote/*'],
     timestamp: new Date().toISOString()
   });
 });
@@ -242,7 +186,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Export for Vercel serverless
+// Export for Vercel
 module.exports = app;
 
 // For local development
