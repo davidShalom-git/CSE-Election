@@ -3,17 +3,54 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const vote = require('./router/User')
+const vote = require('./router/User');
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+// Enhanced CORS configuration for Vercel
+const corsOptions = {
+  origin: [
+    'https://cse-election-2025.vercel.app',
+    'https://cse-election.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:3001'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Body parsing middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Add security headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
+});
 
 // MongoDB connection with better error handling
 let isConnected = false;
@@ -36,7 +73,6 @@ const connectToDatabase = async () => {
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    // Don't throw error, let the app continue for testing
   }
 };
 
@@ -49,7 +85,8 @@ app.get('/', (req, res) => {
     message: 'Voting API is running!',
     status: 'success',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: 'enabled'
   });
 });
 
@@ -69,7 +106,8 @@ app.get('/test', (req, res) => {
     message: 'Test endpoint working',
     path: req.path,
     method: req.method,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    headers: req.headers
   });
 });
 
@@ -85,12 +123,23 @@ app.get('/api', (req, res) => {
       'GET /api/vote/stats',
       'GET /api/vote/stats/:role',
       'GET /api/vote/user-status/:role'
-    ]
+    ],
+    cors: 'enabled'
   });
 });
 
+// Mount vote routes
+app.use('/api/vote', vote);
 
-app.use('/api/vote',vote)
+// CORS test route
+app.get('/api/cors-test', (req, res) => {
+  res.json({
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Catch-all route for API
 app.all('/api/*', (req, res) => {
