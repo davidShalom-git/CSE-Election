@@ -8,10 +8,28 @@ const User = require('./router/User');
 const app = express();
 
 // Middleware
+
+const allowedOrigins = [
+  'https://cse-election-2025.vercel.app',
+  'http://localhost:3000' // optional for local dev
+];
+
 app.use(cors({
-  origin: 'https://cse-election-2025.vercel.app', // ✅ allow your frontend
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
