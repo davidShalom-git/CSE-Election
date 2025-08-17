@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const vote = require('./router/User'); // Import the User router
 
 const app = express();
 
@@ -191,21 +192,7 @@ app.post('/api/vote/register', (req, res) => {
 });
 
 // Try to load the User router, but don't crash if it fails
-let userRouterLoaded = false;
-
-try {
-  const vote = require('./router/User');
-  // Only use the router if it loaded successfully
-  if (vote) {
-    app.use('/api/vote-advanced', vote); // Use different path to avoid conflicts
-    userRouterLoaded = true;
-    console.log('✅ User router loaded successfully on /api/vote-advanced');
-  }
-} catch (error) {
-  console.error('⚠️ User router failed to load:', error.message);
-  console.error('Stack:', error.stack);
-  // Don't crash - continue with basic endpoints
-}
+app.use('/api/vote',vote)
 
 // API info route
 app.get('/api', (req, res) => {
