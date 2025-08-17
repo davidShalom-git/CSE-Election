@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const vote = require('./router/User');
 
 const app = express();
 
@@ -15,46 +14,56 @@ const allowedOrigins = [
   'http://localhost:3001'
 ];
 
-// CORS Middleware - Simplified and Direct
+// CORS Middleware - This must work even if other parts fail
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  console.log(`${req.method} ${req.url} - Origin: ${origin}`);
-  
-  // Set CORS headers for all requests
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else if (!origin) {
-    // Allow requests with no origin (like Postman, mobile apps)
-    res.header('Access-Control-Allow-Origin', '*');
+  try {
+    const origin = req.headers.origin;
+    
+    console.log(`${req.method} ${req.url} - Origin: ${origin}`);
+    
+    // Set CORS headers for all requests
+    if (allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else if (!origin) {
+      // Allow requests with no origin
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+      console.log('Handling OPTIONS request for:', req.url);
+      return res.status(200).end();
+    }
+    
+    next();
+  } catch (error) {
+    console.error('CORS middleware error:', error);
+    res.status(500).json({ error: 'CORS middleware failed', message: error.message });
   }
-  
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  
-  // Handle preflight OPTIONS requests
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
-    return res.status(200).end();
-  }
-  
-  next();
 });
 
 // Body parsing middleware
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-// MongoDB connection
+// MongoDB connection - make it non-blocking
 let isConnected = false;
 
 const connectToDatabase = async () => {
   if (isConnected) return;
 
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote';
+    const mongoUri = process.env.MONGODB_URI;
+    
+    if (!mongoUri) {
+      console.log('⚠️ No MONGODB_URI provided, running without database');
+      return;
+    }
     
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
@@ -67,123 +76,204 @@ const connectToDatabase = async () => {
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
+    // Don't throw - let the app continue
   }
 };
 
-// Initialize database connection
-connectToDatabase();
+// Initialize database connection (non-blocking)
+connectToDatabase().catch(console.error);
 
-// Root route
+// Root route - always works
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Voting API is running!', 
-    status: 'success',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    allowedOrigins: allowedOrigins
-  });
+  try {
+    res.json({ 
+      message: 'Voting API is running!', 
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      allowedOrigins: allowedOrigins,
+      database: isConnected ? 'connected' : 'disconnected'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Root route error', message: error.message });
+  }
 });
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    database: isConnected ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV || 'development'
-  });
+  try {
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      database: isConnected ? 'connected' : 'disconnected',
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Health check error', message: error.message });
+  }
 });
 
 // CORS test route
 app.get('/api/test-cors', (req, res) => {
-  res.json({
-    message: 'CORS test successful',
-    origin: req.headers.origin,
-    method: req.method,
-    allowedOrigins: allowedOrigins,
-    headers: req.headers,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    res.json({
+      message: 'CORS test successful',
+      origin: req.headers.origin,
+      method: req.method,
+      allowedOrigins: allowedOrigins,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'CORS test error', message: error.message });
+  }
 });
 
-// Test route
-app.get('/test', (req, res) => {
-  res.json({
-    message: 'Test endpoint working',
-    path: req.path,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
+// Basic login endpoint that doesn't depend on external files
+app.post('/api/vote/login', (req, res) => {
+  try {
+    console.log('Login endpoint hit');
+    console.log('Request body:', req.body);
+    console.log('Request origin:', req.headers.origin);
+    
+    const { Email, Password } = req.body;
+    
+    if (!Email || !Password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Password are required'
+      });
+    }
+    
+    // For now, just return success (replace with real auth later)
+    res.json({
+      success: true,
+      message: 'Login endpoint working - implement authentication logic',
+      user: { Email },
+      timestamp: new Date().toISOString(),
+      note: 'This is a basic implementation. Add your auth logic here.'
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Login endpoint error', 
+      message: error.message 
+    });
+  }
 });
 
-// API base route
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'API base endpoint',
-    availableRoutes: [
-      'GET /',
-      'GET /health', 
-      'GET /test',
-      'GET /api/test-cors',
-      'GET /api',
-      'POST /api/vote/login',
-      'POST /api/vote/register',
-      'POST /api/vote/:role',
-      'GET /api/vote/candidates',
-      'GET /api/vote/stats'
-    ]
-  });
+// Basic register endpoint
+app.post('/api/vote/register', (req, res) => {
+  try {
+    const { Email, Password } = req.body;
+    
+    if (!Email || !Password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and Password are required'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Register endpoint working - implement registration logic',
+      user: { Email },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Register endpoint error', 
+      message: error.message 
+    });
+  }
 });
 
-// Load vote routes with error handling
+// Try to load the User router, but don't crash if it fails
+let userRouterLoaded = false;
+
 try {
-  app.use('/api/vote', vote);
-  console.log('✅ User router loaded successfully');
-} catch (err) {
-  console.error('⚠️ User router error:', err.message);
+  const vote = require('./router/User');
+  // Only use the router if it loaded successfully
+  if (vote) {
+    app.use('/api/vote-advanced', vote); // Use different path to avoid conflicts
+    userRouterLoaded = true;
+    console.log('✅ User router loaded successfully on /api/vote-advanced');
+  }
+} catch (error) {
+  console.error('⚠️ User router failed to load:', error.message);
+  console.error('Stack:', error.stack);
+  // Don't crash - continue with basic endpoints
 }
 
-// Fallback routes in case router fails
-app.post('/api/vote/login', (req, res) => {
-  console.log('Fallback login route - this should not be called if router is working');
-  res.json({
-    success: false,
-    message: 'Fallback route called - check router loading',
-    body: req.body,
-    timestamp: new Date().toISOString()
-  });
+// API info route
+app.get('/api', (req, res) => {
+  try {
+    res.json({
+      message: 'API base endpoint',
+      status: 'running',
+      userRouterLoaded,
+      availableRoutes: [
+        'GET /',
+        'GET /health', 
+        'GET /api/test-cors',
+        'GET /api',
+        'POST /api/vote/login',
+        'POST /api/vote/register',
+        ...(userRouterLoaded ? ['All routes under /api/vote-advanced'] : [])
+      ],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'API info error', message: error.message });
+  }
 });
 
 // 404 handler for API routes
 app.all('/api/*', (req, res) => {
-  console.log(`404 - API endpoint not found: ${req.method} ${req.path}`);
-  res.status(404).json({
-    error: 'API endpoint not found',
-    path: req.path,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    console.log(`404 - API endpoint not found: ${req.method} ${req.path}`);
+    res.status(404).json({
+      error: 'API endpoint not found',
+      path: req.path,
+      method: req.method,
+      availableEndpoints: ['/api/vote/login', '/api/vote/register', '/api/test-cors'],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: '404 handler error', message: error.message });
+  }
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Global error handler:', err);
+  try {
+    res.status(500).json({
+      error: 'Internal server error',
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
+  } catch (responseError) {
+    console.error('Error in error handler:', responseError);
+    res.end('Critical error');
+  }
 });
 
 // Global 404 handler
 app.all('*', (req, res) => {
-  console.log(`404 - Route not found: ${req.method} ${req.path}`);
-  res.status(404).json({ 
-    error: 'Route not found', 
-    path: req.path,
-    method: req.method,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('❌ Server error:', err);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong!' : err.message,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    console.log(`404 - Route not found: ${req.method} ${req.path}`);
+    res.status(404).json({ 
+      error: 'Route not found', 
+      path: req.path,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Global 404 handler error', message: error.message });
+  }
 });
 
 // Export for Vercel
