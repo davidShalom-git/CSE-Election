@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const User = require('./router/User');
 
 const app = express();
 
@@ -25,13 +24,13 @@ const connectToDatabase = async () => {
 
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote';
-    
+
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
     });
-    
+
     isConnected = true;
     console.log('✅ MongoDB connected successfully');
   } catch (error) {
@@ -45,8 +44,8 @@ connectToDatabase();
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Voting API is running!', 
+  res.json({
+    message: 'Voting API is running!',
     status: 'success',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
@@ -55,8 +54,8 @@ app.get('/', (req, res) => {
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     database: isConnected ? 'connected' : 'disconnected',
     environment: process.env.NODE_ENV || 'development'
@@ -78,26 +77,25 @@ app.get('/api', (req, res) => {
   res.json({
     message: 'API base endpoint',
     availableRoutes: [
-      'GET /',
-      'GET /health', 
-      'GET /test',
-      'GET /api',
-      'GET /api/vote/*'
+      'POST /api/vote/register',
+      'POST /api/vote/login', 
+      'POST /api/vote/:role',
+      'GET /api/vote/candidates',
+      'GET /api/vote/stats',
+      'GET /api/vote/stats/:role',
+      'GET /api/vote/user-status/:role'
     ]
   });
 });
 
-
-app.use('/api/vote', User);
-
-// Load user routes
+// Load user routes - SINGLE REGISTRATION
 try {
   const userRouter = require('./router/User');
   app.use('/api/vote', userRouter);
   console.log('✅ User router loaded successfully');
 } catch (err) {
   console.log('⚠️ User router not found or has errors:', err.message);
-  
+
   // Create a fallback route
   app.get('/api/vote/test', (req, res) => {
     res.json({
@@ -120,11 +118,23 @@ app.all('/api/*', (req, res) => {
 
 // Global 404 handler
 app.all('*', (req, res) => {
-  res.status(404).json({ 
-    error: 'Route not found', 
+  res.status(404).json({
+    error: 'Route not found',
     path: req.path,
     method: req.method,
-    availableRoutes: ['/', '/health', '/test', '/api', '/api/vote/*'],
+    availableRoutes: [
+      '/',
+      '/health',
+      '/test',
+      '/api',
+      'POST /api/vote/register',
+      'POST /api/vote/login',
+      'POST /api/vote/:role',
+      'GET /api/vote/candidates',
+      'GET /api/vote/stats',
+      'GET /api/vote/stats/:role',
+      'GET /api/vote/user-status/:role'
+    ],
     timestamp: new Date().toISOString()
   });
 });

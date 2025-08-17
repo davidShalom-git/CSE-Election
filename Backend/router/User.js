@@ -26,7 +26,7 @@ const candidatesList = {
 
 const validRoles = ['president', 'vicePresident', 'secretary', 'treasury'];
 
-
+// Register route
 router.post('/register', async (req, res) => {
   const { Email, Password } = req.body;
   
@@ -35,15 +35,12 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    
     const existingUser = await User.findOne({ Email: Email.toLowerCase() });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    
     const hashedPassword = await bcrypt.hash(Password, 12); 
-    
     
     const newUser = new User({ 
       Email: Email.toLowerCase(), 
@@ -52,7 +49,6 @@ router.post('/register', async (req, res) => {
     
     await newUser.save();
 
-    
     const token = jwt.sign({ Email: newUser.Email }, JWT_SECRET, { expiresIn: '1d' });
     
     return res.status(201).json({
@@ -66,7 +62,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-
+// Login route
 router.post('/login', async (req, res) => {
   const { Email, Password } = req.body;
   
@@ -75,19 +71,16 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    
     const user = await User.findOne({ Email: Email.toLowerCase() });
     if (!user || !user.isActive) {
       return res.status(404).json({ message: "User not found or inactive" });
     }
 
-   
     const isMatch = await bcrypt.compare(Password, user.Password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-   
     const token = jwt.sign({ Email: user.Email }, JWT_SECRET, { expiresIn: '1d' });
     
     return res.status(200).json({
@@ -101,17 +94,15 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
+// Vote route - Fixed parameter syntax
 router.post('/vote/:role', verifyToken, async (req, res) => {
   const role = req.params.role;
   const { candidate } = req.body;
 
-  
   if (!validRoles.includes(role)) {
     return res.status(400).json({ message: "Invalid role" });
   }
   
- 
   if (!candidate) {
     return res.status(400).json({ message: "Candidate is required" });
   }
@@ -121,18 +112,15 @@ router.post('/vote/:role', verifyToken, async (req, res) => {
   }
 
   try {
-    
     const user = await User.findOne({ Email: req.userEmail, isActive: true });
     if (!user) {
       return res.status(404).json({ message: "User not found or inactive" });
     }
 
-    
     if (user.hasVotedForRole(role)) {
       return res.status(400).json({ message: `You have already voted for ${role}` });
     }
 
- 
     const updateResult = await User.updateOne(
       { 
         Email: req.userEmail, 
@@ -163,7 +151,7 @@ router.post('/vote/:role', verifyToken, async (req, res) => {
   }
 });
 
-
+// User status route - Fixed parameter syntax
 router.get('/user-status/:role', verifyToken, async (req, res) => {
   const role = req.params.role;
 
@@ -192,7 +180,7 @@ router.get('/user-status/:role', verifyToken, async (req, res) => {
   }
 });
 
-
+// Get candidates route
 router.get('/candidates', (req, res) => {
   try {
     return res.status(200).json({
@@ -205,7 +193,7 @@ router.get('/candidates', (req, res) => {
   }
 });
 
-
+// Stats by role route - Fixed parameter syntax
 router.get('/stats/:role', async (req, res) => {
   const role = req.params.role;
 
@@ -214,9 +202,7 @@ router.get('/stats/:role', async (req, res) => {
   }
 
   try {
-  
     const stats = await User.getVotingStats(role);
-    
     
     const allCandidates = candidatesList[role];
     const statsMap = stats.candidateStats.reduce((acc, stat) => {
@@ -245,18 +231,16 @@ router.get('/stats/:role', async (req, res) => {
   }
 });
 
-
+// Overall stats route
 router.get('/stats', async (req, res) => {
   try {
     const allStats = {};
-    
     
     const totalUsers = await User.countDocuments({ isActive: true });
     
     const rolePromises = validRoles.map(async (role) => {
       const stats = await User.getVotingStats(role);
       
-     
       const allCandidates = candidatesList[role];
       const statsMap = stats.candidateStats.reduce((acc, stat) => {
         acc[stat._id] = stat.count;
@@ -285,12 +269,10 @@ router.get('/stats', async (req, res) => {
 
     const roleResults = await Promise.all(rolePromises);
     
-
     roleResults.forEach(({ role, data }) => {
       allStats[role] = data;
     });
 
-   
     const overallVotedUsers = await User.countDocuments({ 
       $or: validRoles.map(role => ({ [`votes.${role}.hasVoted`]: true })),
       isActive: true 
