@@ -3,15 +3,29 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const User = require('./router/User');
 
 const app = express();
 
+// CORS configuration - Fixed
+const corsOptions = {
+  origin: [
+    'https://cse-election-2025.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:3001'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
 // Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -87,13 +101,10 @@ app.get('/api', (req, res) => {
   });
 });
 
-
-app.use('/api/vote', User);
-
 // Load user routes
 try {
-  const userRouter = require('./router/User');
-  app.use('/api/vote', userRouter);
+  const User = require('./router/User');
+  app.use('/api/vote', User);
   console.log('✅ User router loaded successfully');
 } catch (err) {
   console.log('⚠️ User router not found or has errors:', err.message);
