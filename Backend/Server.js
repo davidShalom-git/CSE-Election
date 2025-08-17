@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const vote = require('./router/User')
 
 const app = express();
 
@@ -87,6 +88,8 @@ app.get('/test', (req, res) => {
   });
 });
 
+
+
 // API routes
 app.get('/api', (req, res) => {
   res.json({
@@ -102,22 +105,7 @@ app.get('/api', (req, res) => {
 });
 
 // Load user routes
-try {
-  const User = require('./router/User');
-  app.use('/api/vote', User);
-  console.log('✅ User router loaded successfully');
-} catch (err) {
-  console.log('⚠️ User router not found or has errors:', err.message);
-  
-  // Create a fallback route
-  app.get('/api/vote/test', (req, res) => {
-    res.json({
-      message: 'Vote API test endpoint (fallback)',
-      note: 'User router not loaded',
-      error: err.message
-    });
-  });
-}
+app.use('/api/vote', vote);
 
 // Catch-all route for API
 app.all('/api/*', (req, res) => {
