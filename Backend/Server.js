@@ -12,6 +12,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
       'https://cse-election-2025.vercel.app',
+      'https://cse-election.vercel.app',
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:3001'
