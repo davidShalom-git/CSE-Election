@@ -9,7 +9,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: true,
+  origin: 'https://cse-election-2025.vercel.app', // ✅ allow your frontend
   credentials: true
 }));
 app.use(bodyParser.json());
