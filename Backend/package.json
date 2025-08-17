@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node Server.js",
     "dev": "nodemon Server.js",
-    "vercel-build": "echo 'Build complete'"
+    "vercel-build": "echo 'Build complete'",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
   },
   "keywords": [
     "voting",
@@ -17,13 +18,13 @@
   "license": "ISC",
   "description": "Voting system backend API",
   "dependencies": {
-    "bcrypt": "^5.1.0",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.17.1"
+    "mongoose": "^6.12.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
