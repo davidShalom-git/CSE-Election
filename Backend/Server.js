@@ -7,13 +7,35 @@ const User = require('./router/User');
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Enhanced CORS configuration
+const corsOptions = {
+  origin: [
+    'https://cse-election-2025.vercel.app',
+    'https://cse-election.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173' // Common Vite dev server port
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+// Apply CORS before other middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Body parsing middleware
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // MongoDB connection with better error handling
 let isConnected = false;
@@ -24,12 +46,19 @@ const connectToDatabase = async () => {
   }
 
   try {
-    const mongoUri = process.env.MONGODB_URI 
+    const mongoUri = process.env.MONGODB_URI;
+    
+    if (!mongoUri) {
+      console.warn('⚠️ MONGODB_URI not found in environment variables');
+      return;
+    }
     
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 5000,
+      retryWrites: true,
+      w: 'majority'
     });
     
     isConnected = true;
@@ -42,6 +71,20 @@ const connectToDatabase = async () => {
 
 // Initialize database connection
 connectToDatabase();
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Request logging middleware (for debugging)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  next();
+});
 
 // Root route
 app.get('/', (req, res) => {
@@ -82,15 +125,19 @@ app.get('/api', (req, res) => {
       'GET /health', 
       'GET /test',
       'GET /api',
-      'GET /api/vote/*'
+      'POST /api/vote/register',
+      'POST /api/vote/login',
+      'GET /api/vote/candidates',
+      'POST /api/vote/:role',
+      'GET /api/vote/user-status/:role',
+      'GET /api/vote/stats/:role',
+      'GET /api/vote/stats'
     ]
   });
 });
 
-
+// API routes
 app.use('/api/vote', User);
-
-
 
 // Catch-all route for API
 app.all('/api/*', (req, res) => {
