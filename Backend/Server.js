@@ -40,37 +40,14 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 // MongoDB connection with better error handling
 let isConnected = false;
 
-const connectToDatabase = async () => {
-  if (isConnected) {
-    return;
-  }
-
-  try {
-    const mongoUri = process.env.MONGODB_URI;
-    
-    if (!mongoUri) {
-      console.warn('⚠️ MONGODB_URI not found in environment variables');
-      return;
-    }
-    
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-      retryWrites: true,
-      w: 'majority'
-    });
-    
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
     isConnected = true;
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
-    // Don't throw error, let the app continue for testing
-  }
-};
-
-// Initialize database connection
-connectToDatabase();
+  })
+  .catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  });
 
 // Security headers middleware
 app.use((req, res, next) => {
