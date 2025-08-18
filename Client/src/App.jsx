@@ -1,11 +1,11 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Home from '../Components/Home'
-import President from '../Components/President'
-import Vice from '../Components/Vice'
-import Secretary from '../Components/Secretary'
-import Treasury from '../Components/Treasury'
-import SignIn from '../Auth/SignIn'
+import Home from './Components/Home'
+import President from './Components/President'
+import Vice from './Components/Vice'
+import Secretary from './Components/Secretary'
+import Treasury from './Components/Treasury'
+import SignIn from './Auth/SignIn'
 
 const getToken = () => localStorage.getItem('token')
 

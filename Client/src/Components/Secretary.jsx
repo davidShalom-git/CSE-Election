@@ -1,44 +1,47 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import photo1 from '../assets/bharathan.jpg'
+
+// For demo purposes, using placeholder images. Replace these with your actual imports
+
 
 const candidateData = [
-  { id: 4, name: 'Alice Cooper', description: 'Team player.', motto: 'Together we rise', party: 'Unity Party', image: '👩‍💼', color: 'from-pink-500 via-pink-600 to-pink-700' },
-  { id: 5, name: 'Mark Taylor', description: 'Strategic thinker.', motto: 'Think ahead', party: 'Vision Party', image: '👨‍💼', color: 'from-yellow-500 via-yellow-600 to-yellow-700' }
+  { 
+    id: 6, 
+    name: 'Bharathan K', 
+    description: 'Organized and efficient.', 
+    motto: 'நல்லவர் லட்சியம் வெல்வது நிச்சயம்', 
+    party: 'Independent Party', 
+    image: photo1, 
+    color: 'from-cyan-500 via-cyan-600 to-cyan-700' 
+  },
+  { 
+    id: 7, 
+    name: 'David Kim', 
+    description: 'Dedicated and reliable.', 
+    motto: 'Service with integrity', 
+    party: 'Independent Party', 
+    image: photo1, 
+    color: 'from-lime-500 via-lime-600 to-lime-700' 
+  }
 ]
 
-const Vice = () => {
-  const [token] = useState(() => localStorage.getItem('token'))
-  const [userStatus, setUserStatus] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+const Secretary = () => {
+  // Mock token for demo - replace with your actual localStorage logic
+  const [token] = useState('demo-token')
+  const [userStatus, setUserStatus] = useState({ hasVoted: false })
+  const [isLoading, setIsLoading] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
   const [voteToggle, setVoteToggle] = useState(false)
 
-  const role = 'vicePresident'
+  const role = 'secretary'
 
+  // Mock functions for demo - replace with your actual API calls
   const fetchUserStatus = useCallback(async () => {
-    if (!token) {
-      setIsLoading(false)
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`https://cse-election.vercel.app/api/vote/user-status/${role}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setUserStatus(data)
-      } else {
-        setError(data.message || 'Failed to load user status')
-      }
-    } catch {
-      setError('Network error while loading status')
-    }
-    setIsLoading(false)
-  }, [role, token])
+    // Your actual API call would go here
+    setUserStatus({ hasVoted: false })
+  }, [])
 
   useEffect(() => {
     fetchUserStatus()
@@ -68,29 +71,18 @@ const Vice = () => {
     setError(null)
     setSuccess(null)
 
-    try {
-      const res = await fetch(`https://cse-election.vercel.app/api/vote/vote/${role}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ candidate: candidateName })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setSuccess(`Successfully voted for "${candidateName}"!`)
-        setVoteToggle(v => !v)
-      } else {
-        setError(data.message || 'Vote failed')
-      }
-    } catch {
-      setError('Network error')
-    }
-    setIsVoting(false)
+    // Simulate API call
+    setTimeout(() => {
+      setSuccess(`Successfully voted for "${candidateName}"!`)
+      setUserStatus({ hasVoted: true, votedFor: candidateName, votedAt: new Date().toISOString() })
+      setIsVoting(false)
+    }, 1000)
   }
 
-
+  const handleLogout = () => {
+    // Your logout logic here
+    window.location.replace('/')
+  }
 
   if (isLoading) {
     return (
@@ -128,21 +120,21 @@ const Vice = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-orange-700 to-red-900 py-4 sm:py-8 px-2 sm:px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-700 to-teal-900 py-4 sm:py-8 px-2 sm:px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12 px-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-orange-500 to-red-700 rounded-full mb-4 sm:mb-6 shadow-2xl animate-pulse">
-            <span className="text-2xl sm:text-4xl">🤝</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-r from-cyan-500 to-teal-600 rounded-full mb-4 sm:mb-6 shadow-2xl animate-pulse">
+            <span className="text-2xl sm:text-4xl">📝</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-orange-300 to-red-300 bg-clip-text text-transparent leading-tight capitalize">
-            Vice Presidential Voting System
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-cyan-300 to-teal-300 bg-clip-text text-transparent leading-tight capitalize">
+            Secretary Voting System
           </h1>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-orange-200 px-4">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-cyan-200 px-4">
             {userStatus?.hasVoted
               ? `Thank you for casting your vote for ${userStatus.votedFor}!`
-              : `Cast your vote for your preferred vice presidential candidate`}
+              : `Cast your vote for your preferred secretary candidate`}
           </p>
-          <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-orange-500 to-red-600 mx-auto mt-4 sm:mt-6 rounded-full"></div>
+          <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-cyan-500 to-teal-600 mx-auto mt-4 sm:mt-6 rounded-full"></div>
         </div>
 
         {error && (
@@ -161,21 +153,39 @@ const Vice = () => {
             {candidateData.map((candidate, idx) => (
               <div
                 key={candidate.id}
-                className={`group bg-white/10 backdrop-blur-md rounded-2xl sm:rounded-3xl overflow-hidden border border-white/20 shadow-2xl hover:bg-white/20 transition-all duration-500 hover:scale-102 sm:hover:scale-105 hover:shadow-orange-500/25`}
+                className={`group bg-white/10 backdrop-blur-md rounded-2xl sm:rounded-3xl overflow-hidden border border-white/20 shadow-2xl hover:bg-white/20 transition-all duration-500 hover:scale-102 sm:hover:scale-105 hover:shadow-cyan-500/25`}
                 style={{ animation: `slideInUp 0.6s ease-out ${idx * 0.15}s both` }}
               >
                 <div className={`bg-gradient-to-br ${candidate.color} p-6 text-center relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-black/20"></div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                   <div className="relative z-10">
-                    <div className="text-5xl mb-3 filter drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300">{candidate.image}</div>
+                    {/* Updated photo display logic */}
+                    <div className="mb-4 mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl transform group-hover:scale-110 transition-transform duration-300">
+                      <img 
+                        src={candidate.image} 
+                        alt={candidate.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          e.target.style.display = 'none';
+                          e.target.nextElementSibling.style.display = 'flex';
+                        }}
+                      />
+                      <div 
+                        className="hidden w-full h-full bg-white/20 text-white text-xl font-bold items-center justify-center"
+                        style={{ display: 'none' }}
+                      >
+                        {candidate.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    </div>
                     <h3 className="text-xl font-bold text-white mb-1">{candidate.name}</h3>
                     <p className="text-white/90 text-sm font-medium mb-2">{candidate.party}</p>
                     <div className="w-14 h-1 bg-white/50 mx-auto rounded-full" />
                   </div>
                 </div>
                 <div className="p-6">
-                  <p className="text-orange-200 text-sm mb-3 leading-relaxed">{candidate.description}</p>
+                  <p className="text-cyan-200 text-sm mb-3 leading-relaxed">{candidate.description}</p>
                   <p className="text-white font-medium italic text-center bg-white/5 py-2 px-3 rounded-full border border-white/10 text-xs">"{candidate.motto}"</p>
                   <button
                     onClick={() => handleVote(candidate.name)}
@@ -183,7 +193,7 @@ const Vice = () => {
                     className={`mt-6 w-full py-3 rounded-full font-bold text-white text-base shadow-2xl transition duration-300 ${
                       isVoting
                         ? 'bg-gray-500/50 cursor-not-allowed text-gray-300'
-                        : `bg-gradient-to-r ${candidate.color} hover:shadow-3xl hover:shadow-orange-500/50 transform hover:scale-105 active:scale-95`
+                        : `bg-gradient-to-r ${candidate.color} hover:shadow-3xl hover:shadow-cyan-500/50 transform hover:scale-105 active:scale-95`
                     }`}
                   >
                     {isVoting ? (
@@ -203,11 +213,11 @@ const Vice = () => {
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 text-center border border-white/20 shadow-2xl mx-2 sm:mx-0">
             <div className="text-6xl mb-4 animate-bounce">🎉</div>
             <h3 className="text-3xl font-bold text-white mb-4">Vote Successfully Recorded!</h3>
-            <p className="text-lg text-orange-200 mb-4">
-              You voted for: <span className="font-bold text-transparent bg-gradient-to-r from-orange-300 to-red-300 bg-clip-text">{userStatus.votedFor}</span>
+            <p className="text-lg text-cyan-200 mb-4">
+              You voted for: <span className="font-bold text-transparent bg-gradient-to-r from-cyan-300 to-teal-300 bg-clip-text">{userStatus.votedFor}</span>
             </p>
             {userStatus.votedAt && (
-              <p className="text-orange-300 bg-white/5 inline-block px-6 py-2 rounded-full border border-white/10 text-sm">
+              <p className="text-cyan-300 bg-white/5 inline-block px-6 py-2 rounded-full border border-white/10 text-sm">
                 📅 Voted on: {new Date(userStatus.votedAt).toLocaleString()}
               </p>
             )}
@@ -234,4 +244,4 @@ const Vice = () => {
   )
 }
 
-export default Vice
+export default Secretary
