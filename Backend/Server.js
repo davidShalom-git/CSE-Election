@@ -24,7 +24,7 @@ const connectToDatabase = async () => {
   }
 
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/vote';
+    const mongoUri = process.env.MONGODB_URI 
     
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
