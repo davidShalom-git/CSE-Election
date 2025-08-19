@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import photo1 from '../assets/harini.jpg'
+import photo2 from '../assets/Pooja.jpg'
 
 // For demo purposes, using placeholder images. Replace these with your actual imports
 
-const photo2 = 'https://via.placeholder.com/200x200/eab308/ffffff?text=Mark+Taylor'
 
 const candidateData = [
   { 
@@ -17,10 +17,10 @@ const candidateData = [
   },
   { 
     id: 5, 
-    name: 'Mark Taylor', 
+    name: 'Pooja', 
     description: 'Strategic thinker.', 
-    motto: 'Think ahead', 
-    party: 'Vision Party', 
+    motto: 'Your voice, My priority', 
+    party: 'Independent Party', 
     image: photo2, 
     color: 'from-yellow-500 via-yellow-600 to-yellow-700' 
   }

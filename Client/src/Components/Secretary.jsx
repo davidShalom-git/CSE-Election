@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import photo1 from '../assets/bharathan.jpg'
+import photo2 from '../assets/react.svg'
 
 // For demo purposes, using placeholder images. Replace these with your actual imports
 
@@ -16,11 +17,11 @@ const candidateData = [
   },
   { 
     id: 7, 
-    name: 'David Kim', 
+    name: 'Shyam Sundar', 
     description: 'Dedicated and reliable.', 
     motto: 'Service with integrity', 
     party: 'Independent Party', 
-    image: photo1, 
+    image: photo2, 
     color: 'from-lime-500 via-lime-600 to-lime-700' 
   }
 ]
